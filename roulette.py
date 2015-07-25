@@ -74,7 +74,7 @@ def load_players():
 players = load_players()
 
 def seppuku(player):
-    if player and not player.seppuku:
+    if player and not player.seppuku and player.wins + player.losses > 0:
         player.seppuku = time.time()
         player.wins = 0
         player.losses = 0
@@ -182,7 +182,11 @@ def roul_challenge(phenny, input):
 
     challenge PLAYER to a game of Russian Roulette.
     """
-    if not challenge_allowed(): pass # exit game
+    if not challenge_allowed():
+        return None
+    if input.nick == input.group(2):
+        phenny.say("%s, suicide is not allowed!" % input.nick)
+        return None
 
     # Verify that no player has seppuku'd too recently
     if not get_player(input.nick).can_play():
@@ -255,18 +259,20 @@ def roul_get_ranking(phenny, input):
     display the overall ranking of all players.
     """
     if game_state.game_on:
-        print "got here"
         pass
     else:
         global players
         players = load_players()
         res = sorted(players, key=lambda x: x.percentage())
         res.reverse()
-        res = [p for p in res if not p.invisible()]
-        for player in res:
-            phenny.say('%.3f%%  %s (total rounds: %s)' % (player.percentage(),
-                                                          player.name,
-                                                          player.wins + player.losses))
+        res = [p for p in res if not p.invisible()  and p.wins + p.losses > 0]
+        if not res:
+            phenny.say("Ain't no one here!")
+        else:
+            for player in res:
+                phenny.say('%.3f%%  %s (total rounds: %s)' % (player.percentage(),
+                                                              player.name,
+                                                              player.wins + player.losses))
 roul_get_ranking.commands = ['rranking', 'rall', 'rstats']
 
 def player_exists(name):
@@ -294,10 +300,8 @@ def reboot(phenny, input):
         return
     try:
         os.system('rm roulette.db')
-        for p in players:
-            p.wins = 0
-            p.losses = 0
-            p.seppuku = 0
+        global players
+        players = []
         phenny.say('Russian Roulette is rebooted!')
     except:
         phenny.say('Mmm. Something went wrong.')
