@@ -10,6 +10,9 @@ http://inamidst.com/phenny/
 
 from __future__ import division
 import os, random, time, shelve, math
+import hashlib
+
+HASH = hashlib.md5(open(os.path.abspath(__file__), 'rb').read()).hexdigest()
 
 RELIEF = ["%s wipes the sweat from his brow.",
           "I think %s peed his pants.",
@@ -176,6 +179,10 @@ def seppuku_time_left(nick):
     player = get_player(nick)
     # time left, in minutes
     return round((60.0 - (( time.time() - player.seppuku) / 60)),   1)
+
+def roul_verify(phenny,input):
+    phenny.say("MD5 checksum: %s" % HASH)
+roul_verify.commands = ['rcheck']
 
 def roul_challenge(phenny, input):
     """ .r PLAYER ::
